@@ -19,6 +19,7 @@ signInForm.addEventListener('submit', (e) => {
   };
 
   console.log('full user details ', userData);
+  // window.location.href = './policy.html';
 
   signInUser(userData);
 });
@@ -44,12 +45,14 @@ async function signInUser(userData) {
       // store the data
       const userOK = await response.json();
       const accessToken = userOK.access_token;
-      console.log('ful user response is', userOK);
+      console.log('full user response is', userOK);
       console.log('access access token is ', accessToken);
 
       // use access token and make request for policy data
       getPolicyData(accessToken);
     } else {
+      // Show user login error if bad fetch
+      logInError();
       throw new Error(response);
     }
   } catch (err) {
@@ -63,7 +66,7 @@ async function signInUser(userData) {
  *
  *************************/
 
-async function getPolicyData(accessToken) {
+export default async function getPolicyData(accessToken) {
   try {
     const response = await fetch('https://api.bybits.co.uk/policys/details', {
       headers: {
@@ -95,16 +98,15 @@ async function getPolicyData(accessToken) {
 
 const policyMountNode = document.getElementById('target-policy');
 
-// Data passed to this function inside the fetch call
 function renderPolicyData(policyDetails) {
   const list = document.createElement('ul');
   list.classList.add('policy-list-wrapper');
-  // Build list for each policy item
-  // for (const { policyRef } of renderDetails) {
+
   const li = document.createElement('li');
   li.classList.add('policy-list');
   li.innerHTML = `
         <li class="policy-wrapper">
+         <h2 class="policy-head">your policy details</h2>
         <h3 class="policy-cover">policy reference</h3>
         <p class="policy-cover">${policyDetails.policy_reference}</p>
         </li>
@@ -120,14 +122,30 @@ function renderPolicyData(policyDetails) {
         </li>
 
          <li class="policy-wrapper">
-        <h3 class="policy-cover">adress</h3>
+        <h3 class="policy-cover">address</h3>
         <p class="policy-cover">${policyDetails.policy.address.line_1}, ${policyDetails.policy.address.line_2}, ${policyDetails.policy.address.postcode}</p>
         </li>
         `;
   list.append(li);
-  // }
+
   policyMountNode.innerHTML = '';
   policyMountNode.append(list);
+}
 
-  console.log('policyDetails', policyDetails.policy_reference);
+function logInError() {
+  const list = document.createElement('ul');
+  list.classList.add('policy-list-wrapper');
+
+  const li = document.createElement('li');
+  li.classList.add('policy-list');
+  li.innerHTML = `
+        <li class="policy-wrapper">
+        <h3 class="policy-cover">error</h3>
+        <p class="policy-cover">username or password not recognised – please try again</p>
+        </li>
+        `;
+  list.append(li);
+
+  policyMountNode.innerHTML = '';
+  policyMountNode.append(list);
 }
