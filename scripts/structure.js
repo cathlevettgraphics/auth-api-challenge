@@ -14,7 +14,7 @@ JS
 
 – make a get request using the new auth data ✅
 
-– if data is good – redirect to policy page
+– if data is good – redirect to policy page ✅
 
 – render the data to dom ✅
 

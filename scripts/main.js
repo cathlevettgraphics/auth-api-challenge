@@ -18,10 +18,10 @@ signInForm.addEventListener('submit', (e) => {
     type: 'USER_PASSWORD_AUTH',
   };
 
-  console.log('full user details ', userData);
-  // window.location.href = './policy.html';
+  // console.log('full user details ', userData);
 
   signInUser(userData);
+  signInForm.reset();
 });
 
 /*************************
@@ -41,22 +41,21 @@ async function signInUser(userData) {
       body: JSON.stringify(userData),
     });
 
-    if (response.ok) {
-      // store the data
+    if (userData.username !== '' && userData.password !== '') {
       const userOK = await response.json();
       const accessToken = userOK.access_token;
-      console.log('full user response is', userOK);
-      console.log('access access token is ', accessToken);
+      // console.log('full user response is', userOK);
+      // console.log('access access token is ', accessToken);
 
       // use access token and make request for policy data
       getPolicyData(accessToken);
     } else {
-      // Show user login error if bad fetch
+      // Show user login error if no username or password emtered
       logInError();
       throw new Error(response);
     }
   } catch (err) {
-    console.log('error', err.sendMessage || err.statusText);
+    console.log('error', err.statusText);
   }
 }
 
@@ -66,7 +65,7 @@ async function signInUser(userData) {
  *
  *************************/
 
-export default async function getPolicyData(accessToken) {
+async function getPolicyData(accessToken) {
   try {
     const response = await fetch('https://api.bybits.co.uk/policys/details', {
       headers: {
@@ -78,15 +77,18 @@ export default async function getPolicyData(accessToken) {
     if (response.ok) {
       // render the data
       const policyDetails = await response.json();
-      console.log('secure policy details are', policyDetails);
+      // console.log('secure policy details are', policyDetails);
 
-      // Render the policy details
-      renderPolicyData(policyDetails);
+      // SAVE TO SESSION
+      sessionStorage.setItem('policyDetails', JSON.stringify(policyDetails));
+
+      // route to policy page
+      window.location.assign('policy.html');
     } else {
       throw new Error(response);
     }
   } catch (err) {
-    console.log('error', err.sendMessage || err.statusText);
+    console.log('error', err.statusText);
   }
 }
 
@@ -97,8 +99,14 @@ export default async function getPolicyData(accessToken) {
  *************************/
 
 const policyMountNode = document.getElementById('target-policy');
+const policyMountNodeDetails = document.getElementById('target-policy-details');
 
-function renderPolicyData(policyDetails) {
+function renderPolicyData() {
+  // GET FROM SESSION
+  const policyDetails = JSON.parse(sessionStorage.getItem('policyDetails'));
+  // console.log(policyDetails);
+
+  // Create list
   const list = document.createElement('ul');
   list.classList.add('policy-list-wrapper');
 
@@ -106,11 +114,9 @@ function renderPolicyData(policyDetails) {
   li.classList.add('policy-list');
   li.innerHTML = `
         <li class="policy-wrapper">
-         <h2 class="policy-head">your policy details</h2>
-        <h3 class="policy-cover">policy reference</h3>
+        <h3 class="policy-cover">reference</h3>
         <p class="policy-cover">${policyDetails.policy_reference}</p>
         </li>
-
         <li class="policy-wrapper">
         <h3 class="policy-cover">cover type</h3>
         <p class="policy-cover">${policyDetails.policy.cover}</p>
@@ -120,7 +126,6 @@ function renderPolicyData(policyDetails) {
         <h3 class="policy-cover">car</h3>
         <p class="policy-cover">${policyDetails.vehicle.make}</p>
         </li>
-
          <li class="policy-wrapper">
         <h3 class="policy-cover">address</h3>
         <p class="policy-cover">${policyDetails.policy.address.line_1}, ${policyDetails.policy.address.line_2}, ${policyDetails.policy.address.postcode}</p>
@@ -128,9 +133,23 @@ function renderPolicyData(policyDetails) {
         `;
   list.append(li);
 
-  policyMountNode.innerHTML = '';
-  policyMountNode.append(list);
+  policyMountNodeDetails.innerHTML = '';
+  policyMountNodeDetails.append(list);
 }
+
+/*************************
+ *
+ * RENDER DATA ON POLICY PAGE
+ *
+ *************************/
+
+renderPolicyData();
+
+/*************************
+ *
+ * RENDER ERROR IF NO USERNAME OR PASSWORD
+ *
+ *************************/
 
 function logInError() {
   const list = document.createElement('ul');
@@ -141,7 +160,7 @@ function logInError() {
   li.innerHTML = `
         <li class="policy-wrapper">
         <h3 class="policy-cover">error</h3>
-        <p class="policy-cover">username or password not recognised – please try again</p>
+        <p class="policy-cover">please enter a username and password</p>
         </li>
         `;
   list.append(li);
